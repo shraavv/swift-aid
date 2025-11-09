@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'tutorial_main.dart'; // Import your Tutorials screen
+import 'chat.dart'; // Import your chatbot screen
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -61,12 +63,23 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 // Chatbot Assistant Card
-                const FeatureCard(
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ChatPage()),
+                    );
+                  },
+                  child: const FeatureCard(
                   icon: Icons.chat_bubble_outline_rounded,
                   iconColor: Color(0xFFC5E7C7),
                   title: 'Chatbot Assistant',
                   subtitle: 'Instant help and guidance',
                 ),
+                 
+                ),
+            
               ],
             ),
           ),
