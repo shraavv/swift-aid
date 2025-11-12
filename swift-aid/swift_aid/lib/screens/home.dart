@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:swift_aid/screens/ar_main.dart';
 import 'tutorial_main.dart'; // Import your Tutorials screen
 import 'chat.dart'; // Import your chatbot screen
 
@@ -36,12 +37,22 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 40),
 
                 // AR Guidance Card
-                const FeatureCard(
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ARMainScreen()),
+                    );
+                  },
+                  child: const FeatureCard(
                   icon: Icons.camera_alt_rounded,
                   iconColor: Color(0xFFFF9B9B),
                   title: 'AR Guidance',
                   subtitle: 'Real-time visual assistance',
                 ),
+                ),
+                
                 const SizedBox(height: 20),
 
                 // Tutorials Card (clickable)
