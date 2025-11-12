@@ -3,6 +3,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'tutorial_main.dart';
 import 'chat.dart';
 import 'cam.dart';
+import 'package:swift_aid/screens/ar_main.dart';
+import 'tutorial_main.dart'; // Import your Tutorials screen
+import 'chat.dart'; // Import your chatbot screen
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -46,16 +50,16 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 40),
 
+                // AR Guidance Card
                 InkWell(
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const FirstAidCamera(),
-                    ));
+                          builder: (context) => const ARMainScreen()),
+                    );
                   },
-                  // AR Guidance Card
-                child: const FeatureCard(
+                  child: const FeatureCard(
                   icon: Icons.camera_alt_rounded,
                   iconColor: Color(0xFFFF9B9B),
                   title: 'AI/AR Camera Guidance',
