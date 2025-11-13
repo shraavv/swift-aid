@@ -45,7 +45,7 @@ class _ARMainScreenState extends State<ARMainScreen> {
   Future<void> _addObject() async {
     final node = ARNode(
       type: NodeType.localGLTF2,
-      uri: 'cube.glb',
+      uri: 'assets/cube.glb',
       scale: vector.Vector3(0.5, 0.5, 0.5),
       position: vector.Vector3(0.0, 0.0, -1.0),
     );
