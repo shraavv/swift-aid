@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class ChokingTutorialScreen extends StatefulWidget {
   const ChokingTutorialScreen({super.key});
@@ -12,10 +13,17 @@ class ChokingTutorialScreen extends StatefulWidget {
 
 class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
   late final WebViewController _controller;
+  late FlutterTts flutterTts;
+
   bool _isLoading = true;
   int _currentStep = 0;
 
-  // ✅ Step-by-step choking first aid instructions
+  bool isSpeaking = false;
+  bool isPaused = false;
+
+  List<String> _chunks = [];
+  int _chunkIndex = 0;
+
   final List<Map<String, String>> _steps = [
     {
       "title": "Step 1 of 5",
@@ -47,13 +55,126 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
   @override
   void initState() {
     super.initState();
+
+    flutterTts = FlutterTts();
+    flutterTts.setSpeechRate(0.48);
+    flutterTts.setPitch(1.0);
+    flutterTts.setVolume(1.0);
+
+    flutterTts.setStartHandler(() {
+      setState(() {
+        isSpeaking = true;
+        isPaused = false;
+      });
+    });
+
+    flutterTts.setCompletionHandler(() {
+      if (_chunkIndex < _chunks.length - 1 && !isPaused) {
+        _chunkIndex++;
+        _speakChunk(_chunkIndex);
+      } else {
+        setState(() {
+          isSpeaking = !isPaused;
+          if (!isPaused) {
+            _chunks = [];
+            _chunkIndex = 0;
+          }
+        });
+      }
+    });
+
+    flutterTts.setPauseHandler(() {
+      setState(() {
+        isSpeaking = false;
+        isPaused = true;
+      });
+    });
+
+    flutterTts.setErrorHandler((_) {
+      setState(() {
+        isSpeaking = false;
+        isPaused = false;
+      });
+    });
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.transparent);
+
     _loadModelAsHtml();
   }
 
-  // ✅ Sequential animation loader for choking.glb
+  List<String> _splitIntoChunks(String text) {
+    final parts = text.split(RegExp(r'(?<=[.?!])\s+'));
+    return parts.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  }
+
+  Future<void> speakCurrentStep() async {
+    final text = _steps[_currentStep]["desc"]!;
+    _chunks = _splitIntoChunks(text);
+    _chunkIndex = 0;
+
+    await flutterTts.stop();
+
+    if (_chunks.isEmpty) return;
+
+    setState(() {
+      isPaused = false;
+      isSpeaking = true;
+    });
+
+    await _speakChunk(0);
+  }
+
+  Future<void> _speakChunk(int index) async {
+    if (index >= _chunks.length) return;
+
+    try {
+      await flutterTts.speak(_chunks[index]);
+    } catch (_) {
+      await flutterTts.stop();
+      await flutterTts.speak(_chunks[index]);
+    }
+  }
+
+  Future<void> pauseSpeech() async {
+    try {
+      await flutterTts.pause();
+    } catch (_) {
+      await flutterTts.stop();
+    }
+
+    setState(() {
+      isSpeaking = false;
+      isPaused = true;
+    });
+  }
+
+  Future<void> resumeSpeech() async {
+    if (_chunks.isEmpty) {
+      speakCurrentStep();
+      return;
+    }
+
+    setState(() {
+      isPaused = false;
+      isSpeaking = true;
+    });
+
+    await _speakChunk(_chunkIndex);
+  }
+
+  Future<void> stopSpeech() async {
+    await flutterTts.stop();
+
+    setState(() {
+      isSpeaking = false;
+      isPaused = false;
+      _chunks = [];
+      _chunkIndex = 0;
+    });
+  }
+
   Future<void> _loadModelAsHtml() async {
     try {
       final bytes = await rootBundle.load('assets/choking.glb');
@@ -86,9 +207,9 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
         <model-viewer id="mv"
           src="data:model/gltf-binary;base64,$base64Model"
           alt="Choking First Aid 3D Animated Model"
-          ar
           auto-rotate
           camera-controls
+          ar
           exposure="1"
           shadow-intensity="1">
         </model-viewer>
@@ -99,8 +220,6 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
           mv.addEventListener('load', async () => {
             await mv.updateComplete;
             const animations = mv.availableAnimations || [];
-            console.log('Animations found:', animations);
-
             if (animations.length === 0) return;
 
             let currentIndex = 0;
@@ -111,15 +230,11 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
               isTransitioning = true;
 
               const name = animations[currentIndex];
-              console.log('Playing animation:', name);
-              
               mv.play({ animationName: name, repetitions: 1 });
 
-              // Listen for when the animation ends
               mv.addEventListener('finished', () => {
                 currentIndex = (currentIndex + 1) % animations.length;
 
-                // ✅ Optional fade delay for smooth transition
                 setTimeout(() => {
                   isTransitioning = false;
                   playNext();
@@ -142,24 +257,28 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
         )
         ..loadHtmlString(html);
     } catch (e) {
-      debugPrint('Error loading model: $e');
+      debugPrint("Model Load Error: $e");
     }
   }
 
   void _nextStep() {
-    setState(() {
-      if (_currentStep < _steps.length - 1) {
-        _currentStep++;
-      }
-    });
+    if (_currentStep < _steps.length - 1) {
+      setState(() => _currentStep++);
+      speakCurrentStep();
+    }
   }
 
   void _previousStep() {
-    setState(() {
-      if (_currentStep > 0) {
-        _currentStep--;
-      }
-    });
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+      speakCurrentStep();
+    }
+  }
+
+  @override
+  void dispose() {
+    flutterTts.stop();
+    super.dispose();
   }
 
   @override
@@ -168,13 +287,16 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.3,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
+          onPressed: () {
+            stopSpeech();
+            Navigator.pop(context);
+          },
         ),
         title: const Text(
           'Choking First Aid',
@@ -185,9 +307,10 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
         ),
         centerTitle: false,
       ),
+
       body: Column(
         children: [
-          // ✅ 3D Model Viewer
+          // 3D Model Viewer
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Stack(
@@ -211,6 +334,7 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
                     child: WebViewWidget(controller: _controller),
                   ),
                 ),
+
                 const Positioned(
                   right: 16,
                   top: 14,
@@ -229,7 +353,7 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
 
           const Spacer(),
 
-          // ✅ Step Description Box
+          // Step Description Box
           Container(
             width: double.infinity,
             margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -248,7 +372,9 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
                     color: Color(0xFF1A202C),
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
                 Text(
                   current["desc"]!,
                   textAlign: TextAlign.center,
@@ -264,7 +390,40 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
 
           const SizedBox(height: 20),
 
-          // ✅ Navigation Buttons
+          // 🌟 PLAY / PAUSE / RESUME TOGGLE + STOP BUTTON
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: Icon(
+                  isSpeaking ? Icons.pause_circle_filled : Icons.play_circle_fill,
+                  size: 45,
+                  color: isSpeaking ? Colors.orange : Colors.green,
+                ),
+                onPressed: () {
+                  if (isSpeaking) {
+                    pauseSpeech();
+                  } else if (isPaused) {
+                    resumeSpeech();
+                  } else {
+                    speakCurrentStep();
+                  }
+                },
+              ),
+
+              const SizedBox(width: 20),
+
+              IconButton(
+                icon: const Icon(Icons.stop_circle_outlined,
+                    size: 45, color: Colors.red),
+                onPressed: stopSpeech,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Bottom Navigation Buttons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             child: Row(
@@ -290,7 +449,9 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
                     ),
                   ),
                 ),
+
                 const SizedBox(width: 16),
+
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _nextStep,
