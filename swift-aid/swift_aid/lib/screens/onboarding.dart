@@ -112,22 +112,6 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.language, color: Colors.black54),
-                      SizedBox(width: 8),
-                      Text(
-                        'Select Language',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
                   const Text(
                     'Camera access will be needed for AR guidance.',
                     style: TextStyle(

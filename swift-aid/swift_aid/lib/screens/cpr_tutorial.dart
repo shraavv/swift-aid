@@ -198,7 +198,6 @@ class _CPRTutorialScreenState extends State<CPRTutorialScreen> {
           src="data:model/gltf-binary;base64,$base64Model"
           camera-controls
           auto-rotate
-          ar
           exposure="1"
           shadow-intensity="1">
         </model-viewer>

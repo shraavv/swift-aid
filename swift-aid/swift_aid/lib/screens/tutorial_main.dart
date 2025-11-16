@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'cpr_tutorial.dart'; 
 import 'choking_tutorial.dart';
+import 'swelling_tutorial.dart';
 
 class TutorialsScreen extends StatefulWidget {
   const TutorialsScreen({super.key});
@@ -35,16 +36,15 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
       },
     },
     {
-      'icon': Icons.bloodtype_rounded,
-      'iconColor': const Color(0xFFFFB6B6),
-      'title': 'Bleeding Control',
-      'onTap': null,
-    },
-    {
       'icon': Icons.directions_walk_rounded,
       'iconColor': const Color(0xFFD7C8FF),
-      'title': 'Ankle Sprain',
-      'onTap': null,
+      'title': 'Swelling',
+      'onTap': (BuildContext context) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SwellingTutorialScreen ()),
+        );
+      },
     },
   ];
 

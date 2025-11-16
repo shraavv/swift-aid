@@ -4,14 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
-class ChokingTutorialScreen extends StatefulWidget {
-  const ChokingTutorialScreen({super.key});
+class SwellingTutorialScreen extends StatefulWidget {
+  const SwellingTutorialScreen({super.key});
 
   @override
-  State<ChokingTutorialScreen> createState() => _ChokingTutorialScreenState();
+  State<SwellingTutorialScreen> createState() => _SwellingTutorialScreenState();
 }
 
-class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
+class _SwellingTutorialScreenState extends State<SwellingTutorialScreen> {
   late final WebViewController _controller;
   late FlutterTts flutterTts;
 
@@ -26,24 +26,29 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
 
   final List<Map<String, String>> _steps = [
     {
-      "title": "Step 1 of 4",
+      "title": "Step 1 of 5",
       "desc":
-          "Stand behind the person and wrap your arms around their waist. Lean them slightly forward."
+          "Rest the injured area and avoid putting pressure on it"
     },
     {
-      "title": "Step 2 of 4",
+      "title": "Step 2 of 5",
       "desc":
-          "Make a fist and place it just above their navel. Grasp your fist with your other hand."
+          "Apply an ice pack wrapped in a cloth for 15–20 minutes, repeating every 2–3 hours."
     },
     {
-      "title": "Step 3 of 4",
+      "title": "Step 3 of 5",
       "desc":
-          "Perform quick, inward and upward thrusts (Heimlich maneuver) to try to expel the object."
+          "Use a light compression bandage to support the swelling without making it too tight."
     },
     {
-      "title": "Step 4 of 4",
+      "title": "Step 4 of 5",
       "desc":
-          "If the person becomes unresponsive, start CPR immediately and call for emergency help."
+          "Elevate the injured part above heart level to reduce swelling."
+    },
+    {
+      "title": "Step 5 of 5",
+      "desc":
+          "Avoid heat or massage during the first 48 hours."
     },
   ];
 
@@ -172,7 +177,7 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
 
   Future<void> _loadModelAsHtml() async {
     try {
-      final bytes = await rootBundle.load('assets/chokeglb.glb');
+      final bytes = await rootBundle.load('assets/swelling.glb');
       final base64Model = base64Encode(
         bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
       );
@@ -201,10 +206,9 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
       <body>
         <model-viewer id="mv"
           src="data:model/gltf-binary;base64,$base64Model"
-          alt="Choking First Aid 3D Animated Model"
+          alt="Swelling First Aid 3D Animated Model"
           auto-rotate
           camera-controls
-          
           exposure="1"
           shadow-intensity="1">
         </model-viewer>
@@ -294,7 +298,7 @@ class _ChokingTutorialScreenState extends State<ChokingTutorialScreen> {
           },
         ),
         title: const Text(
-          'Choking First Aid',
+          'Swelling First Aid',
           style: TextStyle(
             color: Colors.black87,
             fontWeight: FontWeight.w600,
