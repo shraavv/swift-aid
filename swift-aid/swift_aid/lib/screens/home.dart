@@ -56,7 +56,7 @@ class HomeScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const ARMainScreen()),
+                          builder: (context) => const ARTutorialsScreen()),
                     );
                   },
                   child: const FeatureCard(

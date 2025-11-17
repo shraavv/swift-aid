@@ -1,81 +1,225 @@
-import 'package:ar_flutter_plugin/datatypes/node_types.dart';
-import 'package:ar_flutter_plugin/managers/ar_anchor_manager.dart';
-import 'package:ar_flutter_plugin/managers/ar_location_manager.dart';
-import 'package:ar_flutter_plugin/managers/ar_object_manager.dart';
-import 'package:ar_flutter_plugin/managers/ar_session_manager.dart';
-import 'package:ar_flutter_plugin/models/ar_node.dart';
 import 'package:flutter/material.dart';
-import 'package:ar_flutter_plugin/ar_flutter_plugin.dart';
-import 'package:vector_math/vector_math_64.dart' as vector;
+import 'package:swift_aid/screens/ar_screens/ar_swelling.dart';
+import 'package:swift_aid/screens/ar_screens/ar_choking.dart';
+import 'package:swift_aid/screens/ar_screens/ar_cpr.dart';
 
-class ARMainScreen extends StatefulWidget {
-  const ARMainScreen({super.key});
+class ARTutorialsScreen extends StatefulWidget {
+  const ARTutorialsScreen({super.key});
+
   @override
-  State<ARMainScreen> createState() => _ARMainScreenState();
+  State<ARTutorialsScreen> createState() => _TutorialsScreenState();
 }
 
-class _ARMainScreenState extends State<ARMainScreen> {
-  late ARSessionManager _arSessionManager;
-  late ARObjectManager _arObjectManager;
-  late ARAnchorManager _arAnchorManager;
-  late ARLocationManager _arLocationManager;
+class _TutorialsScreenState extends State<ARTutorialsScreen> {
+  final List<Map<String, dynamic>> _tutorials = [
+    {
+      'icon': Icons.favorite_border_rounded,
+      'iconColor': const Color(0xFFFF9B9B),
+      'title': 'CPR',
+      'onTap': (BuildContext context) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ARcprWidget()),
+        );
+      },
+    },
+    {
+      'icon': Icons.air_rounded,
+      'iconColor': const Color(0xFFB5D6FF),
+      'title': 'Choking',
+      'onTap': (BuildContext context) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ARChokingWidget ()),
+        );
+      },
+    },
+    {
+      'icon': Icons.bloodtype_rounded,
+      'iconColor': const Color(0xFFFFB6B6),
+      'title': 'Swelling',
+      'onTap': (BuildContext context) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ARSwellingWidget ()),
+        );
+      },
+    },
+    // {
+    //   'icon': Icons.directions_walk_rounded,
+    //   'iconColor': const Color(0xFFD7C8FF),
+    //   'title': 'Ankle Sprain',
+    //   'onTap': (BuildContext context) {
+    //     Navigator.push(
+    //       context,
+    //       MaterialPageRoute(builder: (context) => const ARAnkleSprainWidget ()),
+    //     );
+    //   },
+    // },
+  ];
 
-  ARNode? _localObject;
+  late List<Map<String, dynamic>> _filteredTutorials;
 
-  void onARViewCreated(
-    ARSessionManager arSessionManager,
-    ARObjectManager arObjectManager,
-    ARAnchorManager arAnchorManager,
-    ARLocationManager arLocationManager,
-  ) {
-    _arSessionManager = arSessionManager;
-    _arObjectManager = arObjectManager;
-    _arAnchorManager = arAnchorManager;
-    _arLocationManager = arLocationManager;
-
-    _arSessionManager.onInitialize(
-      showFeaturePoints: false,
-      showPlanes: true,
-      showWorldOrigin: true,
-      handleTaps: false,
-    );
-    _arObjectManager.onInitialize();
-  }
-
-  Future<void> _addObject() async {
-    final node = ARNode(
-      type: NodeType.localGLTF2,
-      uri: 'assets/cube.glb',
-      scale: vector.Vector3(0.5, 0.5, 0.5),
-      position: vector.Vector3(0.0, 0.0, -1.0),
-    );
-
-    bool? didAdd = await _arObjectManager.addNode(node);
-    if (didAdd == true) {
-      _localObject = node;
-    }
-  }
+  final TextEditingController _searchController = TextEditingController();
 
   @override
-  void dispose() {
-    _arSessionManager.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _filteredTutorials = List.from(_tutorials);
+  }
+
+  void _filterTutorials(String query) {
+    final filtered = _tutorials.where((item) {
+      final title = item['title'].toString().toLowerCase();
+      return title.contains(query.toLowerCase());
+    }).toList();
+
+    setState(() => _filteredTutorials = filtered);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AR Scene')),
-      body: Stack(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'AR Guidance',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A202C),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _filterTutorials,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Search AR Guidance',
+                    hintStyle: TextStyle(
+                      color: Color(0xFF8A94A6),
+                      fontSize: 15,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: Color(0xFF8A94A6),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 25),
+
+              Expanded(
+                child: _filteredTutorials.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No AR Guidance found.',
+                          style: TextStyle(
+                            color: Color(0xFF8A94A6),
+                            fontSize: 15,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _filteredTutorials.length,
+                        itemBuilder: (context, index) {
+                          final item = _filteredTutorials[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 18.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                final onTap =
+                                    item['onTap'] as void Function(BuildContext)?;
+                                if (onTap != null) onTap(context);
+                              },
+                              child: TutorialCard(
+                                icon: item['icon'] as IconData,
+                                iconColor: item['iconColor'] as Color,
+                                title: item['title'] as String,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TutorialCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+
+  const TutorialCard({
+    super.key,
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 85,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
-          ARView(onARViewCreated: onARViewCreated),
-          Positioned(
-            bottom: 24,
-            left: 16,
-            right: 16,
-            child: ElevatedButton(
-              onPressed: _addObject,
-              child: const Text('Place 3D Object'),
+          const SizedBox(width: 18),
+          Container(
+            height: 55,
+            width: 55,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.25),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, size: 28, color: iconColor),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A202C),
+              ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(right: 18.0),
+            child: Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Color(0xFFE0E3EB),
+              size: 18,
             ),
           ),
         ],
